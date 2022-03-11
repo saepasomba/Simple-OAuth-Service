@@ -67,44 +67,7 @@ users = {
     }
 }
 
-tokens = {
-
-}
-
-# users = {
-#     "dummy" : {
-#         "username" : "dummy",
-#         "full_name" : "Dummy McGregor",
-#         "npm" : "1906350862",
-#         "hashed_password" : "b0d1f35fada855049a2a014138fddfb55ced7b85",
-#         "client_id" : "1111",
-#         "client_secret" : "2222",
-#         "token" : "",
-#         "token_expire" : "",
-#         "refresh_token" : ""
-#     },
-#     "delta" : {
-#         "username": "delta",
-#          "full_name": "Delta Gittens",
-#          "npm": "1906354212",
-#          "hashed_password": "b00f66d87bb00ca2ccb207bfa3de4110b0da88b9",
-#          "client_id": "6187",
-#          "client_secret": "2660",
-#          "token": "",
-#          "token_expire" : "",
-#          "refresh_token": ""
-#     },
-#     "alpha" : {
-#         "username": "alpha",
-#          "full_name": "Alpha Tankian",
-#          "npm": "1906344158",
-#          "hashed_password": "b2a259f0eeb3cead3093fa2a3915d2b49603e1d5",
-#          "client_id": "2555",
-#          "client_secret": "3527",
-#          "token": "",
-#          "token_expire" : "",
-#          "refresh_token": ""}
-# }
+tokens = {}
 
 def hash_password(password: str):
     #using SHA1
@@ -199,7 +162,6 @@ def token(
             access_token = generate_token()
             refresh_token = generate_token()
 
-            #Perlu?
             current_user["token"] = access_token
             current_user["refresh_token"] = refresh_token
             current_user["token_expire"] = datetime.datetime.now() + datetime.timedelta(minutes=5)
@@ -215,6 +177,7 @@ def token(
             }
 
         raise
+
     except:
         return JSONResponse(
         status_code = 401,
@@ -223,17 +186,18 @@ def token(
 
 @app.post("/oauth/resource")
 async def resource(Authorization: Optional[str] = Header(None)):
-    
-    current_user_identification = tokens[Authorization]
-    current_user = users[current_user_identification["client_id"]][current_user_identification["username"]]
-
-    # for user in users:
-    #     if users[user]["token"] == Authorization:
-    #         current_user = users[user]
     try:
+        auth_split = Authorization.split()
+        if auth_split[0] != "Bearer":
+            raise
+        token = auth_split[1]
+
+        current_user_identification = tokens[token]
+        current_user = users[current_user_identification["client_id"]][current_user_identification["username"]]
+
         if current_user["token_expire"] > datetime.datetime.now():
             return {
-                "access_token" : Authorization,
+                "access_token" : token,
                 "client_id" : current_user["client_id"],
                 "user_id" : current_user["username"],
                 "full_name" : current_user["full_name"],
@@ -242,14 +206,10 @@ async def resource(Authorization: Optional[str] = Header(None)):
                 "refresh_token" : current_user["refresh_token"]
             }
         else:
-            del tokens[Authorization]
+            del tokens[token]
             raise
     except:
         return JSONResponse(
             status_code = 401,
             content = error_message("invalid_token", "Token salah masbro")
         )
-
-@app.get("/get_token")
-def get_tokens():
-    return tokens
