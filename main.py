@@ -23,6 +23,7 @@ import datetime
 
 app = FastAPI()
 
+# PASSWORDS
 # dummy = passwordkuat123
 # delta = delta123
 # alpha = alpha0101
@@ -148,11 +149,11 @@ def error_message(error, error_description):
 
 @app.post("/oauth/token")
 def token(
-    username: str = Form(...), 
-    password: str = Form(...), 
+    username: str = Form(None), 
+    password: str = Form(None), 
     grant_type: str = Form(None, regex="password"), 
-    client_id: str = Form(...), 
-    client_secret: str = Form(...)
+    client_id: str = Form(None), 
+    client_secret: str = Form(None)
     ):
     try: 
         if user_is_valid(username, password, client_id, client_secret):
